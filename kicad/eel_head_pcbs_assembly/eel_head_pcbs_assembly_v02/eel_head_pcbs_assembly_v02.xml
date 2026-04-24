@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <export version="E">
   <design>
-    <source>/Users/adriaanwormgoor/datkanarie/projects/Theater Utrecht - Jaha Koo Eel/Jaha Koo Eel - git/kicad/eel_head_pcbs_assembly/eel_head_pcbs_assembly/eel_head_pcbs_assembly.kicad_sch</source>
+    <source>C:/Users/N-Mar/Documents/Github/jaha-koo-eel/kicad/eel_head_pcbs_assembly/eel_head_pcbs_assembly/eel_head_pcbs_assembly.kicad_sch</source>
     <date>2024 January 26, Friday 11:07:00</date>
     <tool>Eeschema (6.0.5-0)</tool>
     <sheet number="1" name="/" tstamps="/">
@@ -469,13 +469,13 @@
       <uri>/Applications/KiCad/KiCad.app/Contents/SharedSupport/symbols//Switch.kicad_sym</uri>
     </library>
     <library logical="haribo_kimchi_boards">
-      <uri>/Users/adriaanwormgoor/datkanarie/projects/Theater Utrecht - Jaha Koo Eel/Jaha Koo Eel - git/kicad/libraries/haribo_kimchi_boards.kicad_sym</uri>
+      <uri>C:/Users/N-Mar/Documents/Github/jaha-koo-eel/kicad/libraries/haribo_kimchi_boards.kicad_sym</uri>
     </library>
     <library logical="onsemi_FMBM5551">
-      <uri>/Users/adriaanwormgoor/datkanarie/projects/Theater Utrecht - Jaha Koo Eel/Jaha Koo Eel - git/kicad/libraries/onsemi_FMBM5551.kicad_sym</uri>
+      <uri>C:/Users/N-Mar/Documents/Github/jaha-koo-eel/kicad/libraries/onsemi_FMBM5551.kicad_sym</uri>
     </library>
     <library logical="xiao esp32c3">
-      <uri>/Users/adriaanwormgoor/datkanarie/projects/Theater Utrecht - Jaha Koo Eel/Jaha Koo Eel - git/kicad/libraries/MOUDLE-SEEEDUINO-XIAO-ESP32C3.kicad_sym</uri>
+      <uri>C:/Users/N-Mar/Documents/Github/jaha-koo-eel/kicad/libraries/MOUDLE-SEEEDUINO-XIAO-ESP32C3.kicad_sym</uri>
     </library>
   </libraries>
   <nets>

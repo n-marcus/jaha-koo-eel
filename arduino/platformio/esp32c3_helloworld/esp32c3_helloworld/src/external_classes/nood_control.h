@@ -21,6 +21,28 @@ void initNoods();
 void updateBodyLightValues();
 void setBodyLights();
 void setn00d(uint8_t chan, uint8_t val);
+void testNoods();
+
+void testNoods()
+{
+  uint8_t noodChans[] = {nood1a_chan, nood1b_chan, nood2a_chan, nood2b_chan};
+  for (int i = 0; i < 4; i++)
+  {
+    // Fade in
+    for (int dutyCycle = 0; dutyCycle <= 255; dutyCycle++)
+    {
+      setn00d(noodChans[i], dutyCycle);
+      delay(2);
+    }
+
+    // Fade out
+    for (int dutyCycle = 255; dutyCycle >= 0; dutyCycle--)
+    {
+      setn00d(noodChans[i], dutyCycle);
+      delay(2);
+    }
+  }
+}
 
 void initNoods()
 {
@@ -49,6 +71,8 @@ void initNoods()
   setn00d(nood1b_chan, 0);
   setn00d(nood2a_chan, 0);
   setn00d(nood2b_chan, 0);
+
+  testNoods();
 }
 
 void updateBodyLightValues()
@@ -117,4 +141,3 @@ void setn00d(uint8_t chan, uint8_t val)
 {
   ledcWrite(chan, (255 - val));
 }
-
