@@ -121,9 +121,9 @@ void initMotors()
   motorBstop();
 }
 
-// WiFi credentials
-const char *ssid = "Pablos Paleis MainFrame";
-const char *password = "VraagPablo33";
+// WiFi AP credentials
+const char *ssid = "EelController";
+const char *password = NULL; // Open network - no password
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
@@ -301,19 +301,26 @@ void setup()
   initNoods();
   pixels.begin();
 
-  Serial.println("Initializing WiFi...");
+  Serial.println("Starting WiFi Access Point...");
 
-  // Connect to Wi-Fi
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
+  // Ensure we're in pure AP mode before starting
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_AP);
+  delay(100);
 
-  Serial.println("\nWiFi connected!");
-  Serial.print("IP Address: ");
-  Serial.println(WiFi.localIP());
+  // Set explicit static IP for the AP
+  IPAddress apIP(192, 168, 4, 1);
+  IPAddress gateway(192, 168, 4, 1);
+  IPAddress subnet(255, 255, 255, 0);
+  WiFi.softAPConfig(apIP, gateway, subnet);
+
+  // Start as Access Point on channel 6, visible, max 4 clients
+  WiFi.softAP(ssid, password, 6, 0, 4);
+  delay(500); // Give DHCP server time to start
+
+  Serial.println("Access Point started!");
+  Serial.print("AP IP Address: ");
+  Serial.println(WiFi.softAPIP());
 
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
