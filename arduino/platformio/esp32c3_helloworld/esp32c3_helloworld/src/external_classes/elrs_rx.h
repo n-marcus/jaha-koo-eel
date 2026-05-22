@@ -15,10 +15,15 @@ u_long sbusPacketPrintPrevTime = 0;
 u_long sbusPrevPacketTime;
 bool sbusLost = false;
 
-#define SBUS_VAL_MIN 176 // 191
+#define SBUS_VAL_MIN 176  // 191
 #define SBUS_VAL_MAX 1808 // 1793
 #define SBUS_VAL_CENTER 992
-#define SBUS_VAL_DEADBAND 6
+
+#define SBUS_VAL_CENTER_ROLL 992
+#define SBUS_VAL_MIN_ROLL 992
+#define SBUS_VAL_MAX_ROLL 992
+
+#define SBUS_VAL_DEADBAND 20 // Increased from 6 to reduce drift at neutral
 #define SBUS_LOST_TIMEOUT 100
 #define SBUS_SWITCH_MIN 192
 #define SBUS_SWITCH_MAX 1792
@@ -38,9 +43,10 @@ void initELRSRX();
 void resetSbusData();
 void parseSBUS(bool serialPrint);
 
-void initELRSRX() {
+void initELRSRX()
+{
   /* Begin the SBUS communication */
-  
+
   // TODO -> define the RX as input_pullup, so that we might prevent / circumvent the bootloader mode error?
   pinMode(D7, INPUT_PULLUP); // pull up the RX pin
 
@@ -95,6 +101,31 @@ void parseSBUS(bool serialPrint)
       //*/
 
       sbusPacketPrintPrevTime = millis();
+    }
+
+    // Debug calibration output - prints every 500ms
+    static unsigned long lastCalibDebug = 0;
+    if (millis() - lastCalibDebug > 500)
+    {
+      Serial.println("\n=== CHANNEL CALIBRATION ===");
+      Serial.print("ROLL     (Ch0): ");
+      Serial.println(data.ch[TX_ROLL]);
+      Serial.print("PITCH    (Ch1): ");
+      Serial.println(data.ch[TX_PITCH]);
+      Serial.print("THROTTLE (Ch2): ");
+      Serial.println(data.ch[TX_THROTTLE]);
+      Serial.print("YAW      (Ch3): ");
+      Serial.println(data.ch[TX_YAW]);
+      Serial.print("AUX1     (Ch4): ");
+      Serial.println(data.ch[TX_AUX1]);
+      Serial.print("AUX2     (Ch5): ");
+      Serial.println(data.ch[TX_AUX2]);
+      Serial.print("AUX3     (Ch6): ");
+      Serial.println(data.ch[TX_AUX3]);
+      Serial.print("AUX4     (Ch7): ");
+      Serial.println(data.ch[TX_AUX4]);
+      Serial.println("===========================");
+      lastCalibDebug = millis();
     }
   }
 

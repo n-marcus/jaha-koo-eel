@@ -37,18 +37,18 @@ void calcMotorValues()
   //* position of AUX4 selects diff motor power ranges
   if (data.ch[TX_AUX4] > SBUS_SWITCH_MIN_THRESHOLD)
   {
-    motorOutMode = 0; // linear
-    motorPowerRange = 255;
+    motorOutMode = 0;      // linear
+    motorPowerRange = 180; // Reduced from 255 to prevent power issues
   }
   else if (data.ch[TX_AUX4] > SBUS_SWITCH_MAX_THRESHOLD)
   {
-    motorOutMode = 0; // linear
-    motorPowerRange = 200;
+    motorOutMode = 0;      // linear
+    motorPowerRange = 150; // Reduced from 200 to prevent power issues
   }
   else
   {
-    motorOutMode = 1; // wiggle
-    motorPowerRange = 255;
+    motorOutMode = 1;      // wiggle
+    motorPowerRange = 180; // Reduced from 255 to prevent power issues
   }
   //*/
 
@@ -76,7 +76,7 @@ void calcMotorValues()
   int16_t motorStrength = constrain(map(stickDistFromCenter, 0, 800, 0, motorPowerRange), 0, motorPowerRange);
   if (pitchOffset > SBUS_VAL_DEADBAND)
   {
-    if ((data.ch[TX_PITCH] - SBUS_VAL_CENTER) < 0)
+    if ((data.ch[TX_PITCH] - SBUS_VAL_CENTER) > 0)
     {
       motorStrength = -motorStrength;
     }
