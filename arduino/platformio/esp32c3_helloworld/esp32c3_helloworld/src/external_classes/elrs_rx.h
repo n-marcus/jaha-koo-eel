@@ -139,7 +139,7 @@ void parseSBUS(bool serialPrint)
   }
 
   // Periodic calibration display
-  if (millis() - lastDebugTime > DEBUG_INTERVAL && calibrationInitialized)
+  if (millis() - lastDebugTime > DEBUG_INTERVAL && calibrationInitialized && false)
   {
     Serial.println("\n=== CHANNEL CALIBRATION ===");
 

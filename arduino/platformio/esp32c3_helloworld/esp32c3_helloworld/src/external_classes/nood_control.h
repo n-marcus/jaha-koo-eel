@@ -54,7 +54,7 @@ void initNoods()
 void updateBodyLightValues()
 {
   // map throttle range to 0-1023
-  throttle = map(data.ch[TX_THROTTLE], SBUS_VAL_MIN, SBUS_VAL_MAX, 0, 1023);
+  throttle = map(data.ch[TX_THROTTLE], 1000, 1700, 0, 1023);
 
   throttleAdjusted = 0; // used to store the adjusted throttle value
 
@@ -103,6 +103,27 @@ void updateBodyLightValues()
   noodAvgVals[1] = 0.85 * noodAvgVals[1] + 0.15 * noodVals[1];
   noodAvgVals[2] = 0.85 * noodAvgVals[2] + 0.15 * noodVals[2];
   noodAvgVals[3] = 0.85 * noodAvgVals[3] + 0.15 * noodVals[3];
+
+  // Debug print nood values every 500ms
+  static unsigned long lastNoodDebug = 0;
+  if (millis() - lastNoodDebug > 500)
+  {
+    Serial.println("\n=== NOOD VALUES ===");
+    Serial.print("Throttle raw: ");
+    Serial.print(data.ch[TX_THROTTLE]);
+    Serial.print(" | Adjusted: ");
+    Serial.println(throttle);
+    Serial.print("Nood1a: ");
+    Serial.print(noodAvgVals[0]);
+    Serial.print(" | Nood1b: ");
+    Serial.print(noodAvgVals[1]);
+    Serial.print(" | Nood2a: ");
+    Serial.print(noodAvgVals[2]);
+    Serial.print(" | Nood2b: ");
+    Serial.println(noodAvgVals[3]);
+    Serial.println("===================");
+    lastNoodDebug = millis();
+  }
 }
 
 void setBodyLights()
@@ -117,4 +138,3 @@ void setn00d(uint8_t chan, uint8_t val)
 {
   ledcWrite(chan, (255 - val));
 }
-
