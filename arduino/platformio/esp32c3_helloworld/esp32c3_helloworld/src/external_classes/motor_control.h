@@ -217,7 +217,7 @@ void calcMotorValues()
 
   // Motor debug output
   static unsigned long lastMotorDebug = 0;
-  if (millis() - lastMotorDebug > 250)
+  if (millis() - lastMotorDebug > 250 && false)
   {
     Serial.print("MOTOR DEBUG >> ");
     Serial.print("Pitch: ");

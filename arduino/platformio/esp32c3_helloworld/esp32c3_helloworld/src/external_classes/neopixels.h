@@ -36,7 +36,7 @@ uint8_t eyesBaseVal = 32;
 uint8_t mouthBaseVal = 32;
 void updateHeadLightValues()
 {
-    uint8_t audioVal = constrain(map(data.ch[TX_YAW], SBUS_VAL_MIN, SBUS_VAL_MAX, 0, 255), 0, 255);
+    uint8_t audioVal = constrain(map(data.ch[TX_YAW], SBUS_VAL_MIN_YAW, SBUS_VAL_MAX_YAW, 0, 255), 0, 255);
 
     rgbLeds[RIGHT_EYE] = pixels.Color(0, eyesBaseVal + map(audioVal, 0, 255, 0, (255 - eyesBaseVal)), 0);
     rgbLeds[LEFT_EYE] = pixels.Color(0, eyesBaseVal + map(audioVal, 0, 255, 0, (255 - eyesBaseVal)), 0);

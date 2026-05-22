@@ -35,6 +35,9 @@ bool calibrationInitialized = false;
 #define SBUS_VAL_MIN_ROLL 190
 #define SBUS_VAL_MAX_ROLL 1628
 
+#define SBUS_VAL_MIN_YAW 191
+#define SBUS_VAL_MAX_YAW 1793
+
 #define SBUS_VAL_DEADBAND 10
 #define SBUS_LOST_TIMEOUT 100
 #define SBUS_SWITCH_MIN 192
@@ -138,62 +141,62 @@ void parseSBUS(bool serialPrint)
   // Periodic calibration display
   if (millis() - lastDebugTime > DEBUG_INTERVAL && calibrationInitialized)
   {
-    // Serial.println("\n=== CHANNEL CALIBRATION ===");
+    Serial.println("\n=== CHANNEL CALIBRATION ===");
 
-    // // Main control channels
-    // Serial.print("ROLL     (Ch0): [");
-    // Serial.print(data.ch[TX_ROLL]);
-    // Serial.print("] (");
-    // Serial.print(channelMin[TX_ROLL]);
-    // Serial.print("-");
-    // Serial.print(channelMax[TX_ROLL]);
-    // Serial.println(")");
+    // Main control channels
+    Serial.print("ROLL     (Ch0): [");
+    Serial.print(data.ch[TX_ROLL]);
+    Serial.print("] (");
+    Serial.print(channelMin[TX_ROLL]);
+    Serial.print("-");
+    Serial.print(channelMax[TX_ROLL]);
+    Serial.println(")");
 
-    // Serial.print("PITCH    (Ch1): [");
-    // Serial.print(data.ch[TX_PITCH]);
-    // Serial.print("] (");
-    // Serial.print(channelMin[TX_PITCH]);
-    // Serial.print("-");
-    // Serial.print(channelMax[TX_PITCH]);
-    // Serial.println(")");
+    Serial.print("PITCH    (Ch1): [");
+    Serial.print(data.ch[TX_PITCH]);
+    Serial.print("] (");
+    Serial.print(channelMin[TX_PITCH]);
+    Serial.print("-");
+    Serial.print(channelMax[TX_PITCH]);
+    Serial.println(")");
 
-    // Serial.print("THROTTLE (Ch2): [");
-    // Serial.print(data.ch[TX_THROTTLE]);
-    // Serial.print("] (");
-    // Serial.print(channelMin[TX_THROTTLE]);
-    // Serial.print("-");
-    // Serial.print(channelMax[TX_THROTTLE]);
-    // Serial.println(")");
+    Serial.print("THROTTLE (Ch2): [");
+    Serial.print(data.ch[TX_THROTTLE]);
+    Serial.print("] (");
+    Serial.print(channelMin[TX_THROTTLE]);
+    Serial.print("-");
+    Serial.print(channelMax[TX_THROTTLE]);
+    Serial.println(")");
 
-    // Serial.print("YAW      (Ch3): [");
-    // Serial.print(data.ch[TX_YAW]);
-    // Serial.print("] (");
-    // Serial.print(channelMin[TX_YAW]);
-    // Serial.print("-");
-    // Serial.print(channelMax[TX_YAW]);
-    // Serial.println(")");
+    Serial.print("YAW      (Ch3): [");
+    Serial.print(data.ch[TX_YAW]);
+    Serial.print("] (");
+    Serial.print(channelMin[TX_YAW]);
+    Serial.print("-");
+    Serial.print(channelMax[TX_YAW]);
+    Serial.println(")");
 
-    // // Aux channels
-    // for (int i = 4; i < 8; i++)
-    // {
-    //   Serial.print("AUX");
-    //   Serial.print(i - 3);
-    //   Serial.print("     (Ch");
-    //   Serial.print(i);
-    //   Serial.print("): [");
-    //   Serial.print(data.ch[i]);
-    //   Serial.print("] (");
-    //   Serial.print(channelMin[i]);
-    //   Serial.print("-");
-    //   Serial.print(channelMax[i]);
-    //   Serial.println(")");
-    // }
+    // Aux channels
+    for (int i = 4; i < 8; i++)
+    {
+      Serial.print("AUX");
+      Serial.print(i - 3);
+      Serial.print("     (Ch");
+      Serial.print(i);
+      Serial.print("): [");
+      Serial.print(data.ch[i]);
+      Serial.print("] (");
+      Serial.print(channelMin[i]);
+      Serial.print("-");
+      Serial.print(channelMax[i]);
+      Serial.println(")");
+    }
 
-    // Serial.print("\nFlags: Lost=");
-    // Serial.print(data.lost_frame);
-    // Serial.print(" Failsafe=");
-    // Serial.println(data.failsafe);
-    // Serial.println("===========================");
+    Serial.print("\nFlags: Lost=");
+    Serial.print(data.lost_frame);
+    Serial.print(" Failsafe=");
+    Serial.println(data.failsafe);
+    Serial.println("===========================");
 
     lastDebugTime = millis();
   }
