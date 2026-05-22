@@ -38,7 +38,7 @@ EelMotor motor2(motor2a_pin, motor2b_pin, motor2_chan, resolution, freq);
 int16_t motor1Val;
 int16_t motor2Val;
 
-float motorIntensity = 0.8;
+float motorIntensity = 1.0;
 
 int16_t n00d1a, n00d1b, n00d2a, n00d2b;
 uint16_t throttle, throttleAdjusted;
@@ -50,8 +50,8 @@ void driveMotors();
 void initMotors()
 {
   // Motor reverse flags - swap these if individual motors go wrong way
-  motor1.reversed = false; // CHANGED: try false first
-  motor2.reversed = false; // CHANGED: try false first
+  motor1.reversed = true; // CHANGED: try false first
+  motor2.reversed = true; // CHANGED: try false first
 
   Serial.println("Motors initialized:");
   Serial.print("  Motor1 reversed: ");
@@ -112,9 +112,9 @@ void calcMotorValues()
   if (pitchOffset > SBUS_VAL_DEADBAND)
   {
     // CHANGE THIS LINE to flip forward/backward
-    // Current: pitch < center = negative (reverse)
-    // To flip: change < to >
-    if ((data.ch[TX_PITCH] - SBUS_VAL_CENTER) < 0) // CHANGED from < to >
+    // Current: pitch > center = negative (reverse)
+    // To flip: change > to <
+    if ((data.ch[TX_PITCH] - SBUS_VAL_CENTER) < 0) // Flipped back to <
     {
       motorStrength = -motorStrength;
     }
