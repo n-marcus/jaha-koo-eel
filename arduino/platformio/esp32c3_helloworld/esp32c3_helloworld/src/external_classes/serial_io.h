@@ -79,7 +79,7 @@ void checkIncomingSerial()
 {
     if (Serial.available() > 0)
     {
-        printSbusData = false;
+        printSbusData = true;
 
         char inChar = Serial.read();
         switch (inChar)

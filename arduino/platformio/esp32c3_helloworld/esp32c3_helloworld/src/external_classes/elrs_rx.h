@@ -1,10 +1,12 @@
 #include "sbus.h"
 #include <HardwareSerial.h>
 
-HardwareSerial MySerial0(0);
+// Use UART1 to avoid conflict with USB Serial (UART0)
+HardwareSerial MySerial1(1);
 
 /* SBUS object, reading SBUS */
-bfs::SbusRx sbus_rx(&MySerial0, D7, D6, true, false);
+// D7 = GPIO20 (RX), D6 = GPIO21 (TX) on Seeed XIAO ESP32-C3
+bfs::SbusRx sbus_rx(&MySerial1, D7, D6, true, false);
 
 /* SBUS data */
 bfs::SbusData data;
@@ -15,15 +17,20 @@ u_long sbusPacketPrintPrevTime = 0;
 u_long sbusPrevPacketTime;
 bool sbusLost = false;
 
+// Debug counters
+u_long lastDebugTime = 0;
+#define DEBUG_INTERVAL 500 // Print debug info every 500ms
+int totalBytesReceived = 0;
+
+// Calibration tracking
+int16_t channelMin[16];
+int16_t channelMax[16];
+bool calibrationInitialized = false;
+
 #define SBUS_VAL_MIN 176  // 191
 #define SBUS_VAL_MAX 1808 // 1793
 #define SBUS_VAL_CENTER 992
-
-#define SBUS_VAL_CENTER_ROLL 992
-#define SBUS_VAL_MIN_ROLL 992
-#define SBUS_VAL_MAX_ROLL 992
-
-#define SBUS_VAL_DEADBAND 20 // Increased from 6 to reduce drift at neutral
+#define SBUS_VAL_DEADBAND 6
 #define SBUS_LOST_TIMEOUT 100
 #define SBUS_SWITCH_MIN 192
 #define SBUS_SWITCH_MAX 1792
@@ -47,11 +54,32 @@ void initELRSRX()
 {
   /* Begin the SBUS communication */
 
+  Serial.println("\n=== Initializing SBUS ===");
+  Serial.print("RX Pin D7 = GPIO");
+  Serial.println(D7);
+  Serial.print("TX Pin D6 = GPIO");
+  Serial.println(D6);
+  Serial.println("Using UART1 (not UART0 which is USB Serial)");
+
   // TODO -> define the RX as input_pullup, so that we might prevent / circumvent the bootloader mode error?
   pinMode(D7, INPUT_PULLUP); // pull up the RX pin
 
+  Serial.print("D7 initial state (should be 1): ");
+  Serial.println(digitalRead(D7));
+
+  Serial.println("\n** HARDWARE TEST **");
+  Serial.println("Briefly touch D7 to GND to test if pin reading works...");
+  delay(3000);
+  Serial.print("D7 state after 3 sec: ");
+  Serial.println(digitalRead(D7));
+  Serial.println("** END HARDWARE TEST **\n");
+
   sbus_rx.Begin();
   // sbus_tx.Begin();
+
+  Serial.println("SBUS Begin() called on UART1 - waiting for data...");
+  Serial.println("Expected: 100000 baud, 8E2, inverted signal");
+  Serial.println("=========================\n");
 
   // by default, let's have the program assume sbus is lost
   sbusPrevPacketTime = -SBUS_LOST_TIMEOUT;
@@ -73,6 +101,98 @@ void resetSbusData()
 
 void parseSBUS(bool serialPrint)
 {
+  // Low-level debug: Check if ANY bytes are available
+  static int debugCounter = 0;
+  debugCounter++;
+
+  int bytesAvailable = MySerial1.available();
+  if (bytesAvailable > 0)
+  {
+    totalBytesReceived += bytesAvailable;
+    // Serial.print("RAW DATA! Bytes available: ");
+    // Serial.print(bytesAvailable);
+    // Serial.print(" | Total: ");
+    // Serial.println(totalBytesReceived);
+
+    // Read and dump first few bytes in hex
+    // Serial.print("Hex: ");
+    // for (int i = 0; i < min(bytesAvailable, 25); i++)
+    // {
+    //   if (MySerial1.available())
+    //   {
+    //     byte b = MySerial1.read();
+    //     if (b < 0x10)
+    //       Serial.print("0");
+    //     Serial.print(b, HEX);
+    //     Serial.print(" ");
+    //   }
+    // }
+    // Serial.println();
+  }
+
+  // Periodic calibration display
+  if (millis() - lastDebugTime > DEBUG_INTERVAL && calibrationInitialized)
+  {
+    // Serial.println("\n=== CHANNEL CALIBRATION ===");
+
+    // // Main control channels
+    // Serial.print("ROLL     (Ch0): [");
+    // Serial.print(data.ch[TX_ROLL]);
+    // Serial.print("] (");
+    // Serial.print(channelMin[TX_ROLL]);
+    // Serial.print("-");
+    // Serial.print(channelMax[TX_ROLL]);
+    // Serial.println(")");
+
+    // Serial.print("PITCH    (Ch1): [");
+    // Serial.print(data.ch[TX_PITCH]);
+    // Serial.print("] (");
+    // Serial.print(channelMin[TX_PITCH]);
+    // Serial.print("-");
+    // Serial.print(channelMax[TX_PITCH]);
+    // Serial.println(")");
+
+    // Serial.print("THROTTLE (Ch2): [");
+    // Serial.print(data.ch[TX_THROTTLE]);
+    // Serial.print("] (");
+    // Serial.print(channelMin[TX_THROTTLE]);
+    // Serial.print("-");
+    // Serial.print(channelMax[TX_THROTTLE]);
+    // Serial.println(")");
+
+    // Serial.print("YAW      (Ch3): [");
+    // Serial.print(data.ch[TX_YAW]);
+    // Serial.print("] (");
+    // Serial.print(channelMin[TX_YAW]);
+    // Serial.print("-");
+    // Serial.print(channelMax[TX_YAW]);
+    // Serial.println(")");
+
+    // // Aux channels
+    // for (int i = 4; i < 8; i++)
+    // {
+    //   Serial.print("AUX");
+    //   Serial.print(i - 3);
+    //   Serial.print("     (Ch");
+    //   Serial.print(i);
+    //   Serial.print("): [");
+    //   Serial.print(data.ch[i]);
+    //   Serial.print("] (");
+    //   Serial.print(channelMin[i]);
+    //   Serial.print("-");
+    //   Serial.print(channelMax[i]);
+    //   Serial.println(")");
+    // }
+
+    // Serial.print("\nFlags: Lost=");
+    // Serial.print(data.lost_frame);
+    // Serial.print(" Failsafe=");
+    // Serial.println(data.failsafe);
+    // Serial.println("===========================");
+
+    lastDebugTime = millis();
+  }
+
   if (sbus_rx.Read())
   {
     sbusPrevPacketTime = millis();
@@ -85,49 +205,30 @@ void parseSBUS(bool serialPrint)
     /* Grab the received data */
     data = sbus_rx.data();
 
-    /* Display the received data */
-    if (millis() - sbusPacketPrintPrevTime > SBUS_PACKET_PRINT_INTERVAL)
+    // Initialize calibration arrays on first packet
+    if (!calibrationInitialized)
     {
-      //*
-      if (Serial && serialPrint)
+      for (int i = 0; i < 16; i++)
       {
-        for (int8_t i = 0; i < data.NUM_CH; i++)
-        {
-          Serial.print(data.ch[i]);
-          Serial.print("\t");
-        }
-        Serial.println();
+        channelMin[i] = 2000;
+        channelMax[i] = 0;
       }
-      //*/
-
-      sbusPacketPrintPrevTime = millis();
+      calibrationInitialized = true;
+      Serial.println("\n*** CALIBRATION MODE ***");
+      Serial.println("Move all sticks to their extremes to calibrate range");
+      Serial.println("Format: CH# [Current] (Min-Max)\n");
     }
 
-    // Debug calibration output - prints every 500ms
-    static unsigned long lastCalibDebug = 0;
-    if (millis() - lastCalibDebug > 500)
+    // Track min/max for calibration
+    for (int8_t i = 0; i < data.NUM_CH; i++)
     {
-      Serial.println("\n=== CHANNEL CALIBRATION ===");
-      Serial.print("ROLL     (Ch0): ");
-      Serial.println(data.ch[TX_ROLL]);
-      Serial.print("PITCH    (Ch1): ");
-      Serial.println(data.ch[TX_PITCH]);
-      Serial.print("THROTTLE (Ch2): ");
-      Serial.println(data.ch[TX_THROTTLE]);
-      Serial.print("YAW      (Ch3): ");
-      Serial.println(data.ch[TX_YAW]);
-      Serial.print("AUX1     (Ch4): ");
-      Serial.println(data.ch[TX_AUX1]);
-      Serial.print("AUX2     (Ch5): ");
-      Serial.println(data.ch[TX_AUX2]);
-      Serial.print("AUX3     (Ch6): ");
-      Serial.println(data.ch[TX_AUX3]);
-      Serial.print("AUX4     (Ch7): ");
-      Serial.println(data.ch[TX_AUX4]);
-      Serial.println("===========================");
-      lastCalibDebug = millis();
+      if (data.ch[i] < channelMin[i])
+        channelMin[i] = data.ch[i];
+      if (data.ch[i] > channelMax[i])
+        channelMax[i] = data.ch[i];
     }
   }
+  // No else block - reduces spam when no packets
 
   // if SBUS lost, reset the channels
   if (millis() - sbusPrevPacketTime > SBUS_LOST_TIMEOUT)

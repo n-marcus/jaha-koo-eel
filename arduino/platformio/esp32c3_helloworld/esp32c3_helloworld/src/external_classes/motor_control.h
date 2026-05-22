@@ -1,3 +1,27 @@
+/*
+ * MOTOR CALIBRATION GUIDE:
+ *
+ * 1. Watch the serial monitor for channel calibration output
+ * 2. Move pitch stick full forward/back to see value ranges
+ * 3. Check MOTOR DEBUG output to see M1/M2 values
+ *
+ * DIRECTION FIXES:
+ * - If BOTH motors go backwards when stick forward:
+ *   -> In calcMotorValues(), flip the comparison: < to > or vice versa
+ *      (line ~82: "if ((data.ch[TX_PITCH] - SBUS_VAL_CENTER) > 0)")
+ *
+ * - If ONE motor goes wrong direction:
+ *   -> In initMotors(), toggle that motor's .reversed flag
+ *
+ * - If left/right steering is backwards:
+ *   -> Swap motor1Val and motor2Val assignments
+ *      OR swap mixLeft/mixRight in the calculations
+ *
+ * RANGE FIXES:
+ * - Update SBUS_VAL_MIN and SBUS_VAL_MAX in elrs_rx.h based on calibration output
+ * - Center should be around 992, typical range is 172-1811
+ */
+
 #include <EelMotor.h>
 
 #define motor1a_pin D5
@@ -23,8 +47,15 @@ void driveMotors();
 
 void initMotors()
 {
-  motor1.reversed = true;
-  motor2.reversed = true;
+  // Motor reverse flags - swap these if individual motors go wrong way
+  motor1.reversed = false; // CHANGED: try false first
+  motor2.reversed = false; // CHANGED: try false first
+
+  Serial.println("Motors initialized:");
+  Serial.print("  Motor1 reversed: ");
+  Serial.println(motor1.reversed);
+  Serial.print("  Motor2 reversed: ");
+  Serial.println(motor2.reversed);
 }
 
 uint8_t motorStrength;
@@ -37,18 +68,18 @@ void calcMotorValues()
   //* position of AUX4 selects diff motor power ranges
   if (data.ch[TX_AUX4] > SBUS_SWITCH_MIN_THRESHOLD)
   {
-    motorOutMode = 0;      // linear
-    motorPowerRange = 180; // Reduced from 255 to prevent power issues
+    motorOutMode = 0; // linear
+    motorPowerRange = 255;
   }
   else if (data.ch[TX_AUX4] > SBUS_SWITCH_MAX_THRESHOLD)
   {
-    motorOutMode = 0;      // linear
-    motorPowerRange = 150; // Reduced from 200 to prevent power issues
+    motorOutMode = 0; // linear
+    motorPowerRange = 200;
   }
   else
   {
-    motorOutMode = 1;      // wiggle
-    motorPowerRange = 180; // Reduced from 255 to prevent power issues
+    motorOutMode = 1; // wiggle
+    motorPowerRange = 255;
   }
   //*/
 
@@ -74,9 +105,14 @@ void calcMotorValues()
   uint16_t rollOffset = abs(data.ch[TX_ROLL] - SBUS_VAL_CENTER);
   double stickDistFromCenter = sqrt(pow(pitchOffset, 2) + pow(rollOffset, 2));
   int16_t motorStrength = constrain(map(stickDistFromCenter, 0, 800, 0, motorPowerRange), 0, motorPowerRange);
+
+  // PITCH DIRECTION: Invert this logic if motors go wrong direction
   if (pitchOffset > SBUS_VAL_DEADBAND)
   {
-    if ((data.ch[TX_PITCH] - SBUS_VAL_CENTER) > 0)
+    // CHANGE THIS LINE to flip forward/backward
+    // Current: pitch < center = negative (reverse)
+    // To flip: change < to >
+    if ((data.ch[TX_PITCH] - SBUS_VAL_CENTER) < 0) // CHANGED from < to >
     {
       motorStrength = -motorStrength;
     }
@@ -174,10 +210,23 @@ void calcMotorValues()
   motor1Val = constrain(motor1Val, -255, 255);
   motor2Val = constrain(motor2Val, -255, 255);
 
-  // EVERY_N_MILLIS(150)
-  // {
-  //   Serial.println("pitch: " + String(data.ch[TX_PITCH]) + ", roll: " + String(data.ch[TX_ROLL]) + ", pitchOffset: " + String(pitchOffset) + ", stickDistFromCenter: " + String(stickDistFromCenter) + ", motorStrength: " + String(motorStrength) + ", mix: " + String(mix) + ", motor1Val: " + String(motor1Val) + ", motor2Val: " + String(motor2Val));
-  // }
+  // Motor debug output
+  static unsigned long lastMotorDebug = 0;
+  if (millis() - lastMotorDebug > 250)
+  {
+    Serial.print("MOTOR DEBUG >> ");
+    Serial.print("Pitch: ");
+    Serial.print(data.ch[TX_PITCH]);
+    Serial.print(" | Roll: ");
+    Serial.print(data.ch[TX_ROLL]);
+    Serial.print(" | Strength: ");
+    Serial.print(motorStrength);
+    Serial.print(" | M1: ");
+    Serial.print(motor1Val);
+    Serial.print(" | M2: ");
+    Serial.println(motor2Val);
+    lastMotorDebug = millis();
+  }
 }
 
 void driveMotors()
