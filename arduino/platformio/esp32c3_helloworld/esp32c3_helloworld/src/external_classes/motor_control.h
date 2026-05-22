@@ -38,6 +38,8 @@ EelMotor motor2(motor2a_pin, motor2b_pin, motor2_chan, resolution, freq);
 int16_t motor1Val;
 int16_t motor2Val;
 
+float motorIntensity = 0.8;
+
 int16_t n00d1a, n00d1b, n00d2a, n00d2b;
 uint16_t throttle, throttleAdjusted;
 
@@ -102,7 +104,7 @@ void calcMotorValues()
 
   // calc drive strength and determine fwd/rev direction
   uint16_t pitchOffset = abs(data.ch[TX_PITCH] - SBUS_VAL_CENTER);
-  uint16_t rollOffset = abs(data.ch[TX_ROLL] - SBUS_VAL_CENTER);
+  uint16_t rollOffset = abs(data.ch[TX_ROLL] - SBUS_VAL_CENTER_ROLL);
   double stickDistFromCenter = sqrt(pow(pitchOffset, 2) + pow(rollOffset, 2));
   int16_t motorStrength = constrain(map(stickDistFromCenter, 0, 800, 0, motorPowerRange), 0, motorPowerRange);
 
@@ -136,15 +138,15 @@ void calcMotorValues()
 
     // /*
     // range 0.0-1.0, then an exponent, then map to 250-750
-    mix = constrain(map(data.ch[TX_ROLL], SBUS_VAL_MIN, SBUS_VAL_MAX, 0, 2000), 0, 2000); // gives a range of 0-2000
+    mix = constrain(map(data.ch[TX_ROLL], SBUS_VAL_MIN_ROLL, SBUS_VAL_MAX_ROLL, 0, 2000), 0, 2000); // gives a range of 0-2000
     // mix = pow(mix, 1.4);
     // mix = map((mix * 1000.0), 1000, 0, 250, 750) / 1000.0; // reverse the input range because we want to reverse the steering
     // mix = map((mix * 1000.0), 1000, 0, 0, 1000) / 1000.0; // reverse the input range because we want to reverse the steering
     //*/
 
     // shitty hack
-    uint16_t mixLeft = constrain(map(data.ch[TX_ROLL], SBUS_VAL_CENTER, SBUS_VAL_MIN, 1000, 0), 0, 1000);
-    uint16_t mixRight = constrain(map(data.ch[TX_ROLL], SBUS_VAL_CENTER, SBUS_VAL_MAX, 1000, 0), 0, 1000);
+    uint16_t mixLeft = constrain(map(data.ch[TX_ROLL], SBUS_VAL_CENTER_ROLL, SBUS_VAL_MIN_ROLL, 1000, 0), 0, 1000);
+    uint16_t mixRight = constrain(map(data.ch[TX_ROLL], SBUS_VAL_CENTER_ROLL, SBUS_VAL_MAX_ROLL, 1000, 0), 0, 1000);
 
     // motor1Val = (int16_t)((throttleVal * (2000 - mix)) / mulVal);
     // motor2Val = (int16_t)((throttleVal * mix) / mulVal);
@@ -168,8 +170,8 @@ void calcMotorValues()
     int16_t throttleVal = motorStrength;
 
     // shitty hack
-    int16_t mixLeft = constrain(map(data.ch[TX_ROLL], SBUS_VAL_CENTER, SBUS_VAL_MIN, 1000, -1000), -1000, 1000);
-    int16_t mixRight = constrain(map(data.ch[TX_ROLL], SBUS_VAL_CENTER, SBUS_VAL_MAX, 1000, -1000), -1000, 1000);
+    int16_t mixLeft = constrain(map(data.ch[TX_ROLL], SBUS_VAL_CENTER_ROLL, SBUS_VAL_MIN_ROLL, 1000, -1000), -1000, 1000);
+    int16_t mixRight = constrain(map(data.ch[TX_ROLL], SBUS_VAL_CENTER_ROLL, SBUS_VAL_MAX_ROLL, 1000, -1000), -1000, 1000);
 
     motor1Val = (int16_t)((throttleVal * mixRight) / 1000);
     motor2Val = (int16_t)((throttleVal * mixLeft) / 1000);
@@ -209,6 +211,9 @@ void calcMotorValues()
 
   motor1Val = constrain(motor1Val, -255, 255);
   motor2Val = constrain(motor2Val, -255, 255);
+
+  motor1Val = (int)(motor1Val * motorIntensity);
+  motor2Val = (int)(motor2Val * motorIntensity);
 
   // Motor debug output
   static unsigned long lastMotorDebug = 0;
