@@ -77,7 +77,7 @@ void updateBodyLightValues()
   // map throttle range to 512-1023 (noods only use upper half)
 
   // throttle = map(data.ch[TX_THROTTLE], 465, 1907, 512, 1023); keep for later use
-  throttle = map(data.ch[TX_THROTTLE], 1005, 1790, 512, 1023);
+  throttle = map(data.ch[TX_THROTTLE], 1002, 1790, 512, 1023);
 
   throttleAdjusted = 0; // used to store the adjusted throttle value
 
