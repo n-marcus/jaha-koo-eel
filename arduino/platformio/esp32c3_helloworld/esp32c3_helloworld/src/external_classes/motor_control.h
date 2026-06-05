@@ -38,6 +38,11 @@ EelMotor motor2(motor2a_pin, motor2b_pin, motor2_chan, resolution, freq);
 int16_t motor1Val;
 int16_t motor2Val;
 
+// Motor smoothing variables for remote control mode
+float motor1Smoothed = 0;
+float motor2Smoothed = 0;
+const float motorSmoothingFactor = 0.15; // 0.0 = no change, 1.0 = instant change. Try 0.1-0.3 for smooth ramping
+
 float motorIntensity = 0.8;
 
 int16_t n00d1a, n00d1b, n00d2a, n00d2b;
@@ -236,31 +241,40 @@ void calcMotorValues()
 
 void driveMotors()
 {
+  // Apply smoothing to motor values for gradual acceleration/deceleration
+  // This prevents jerky on/off behavior
+  motor1Smoothed = motor1Smoothed * (1.0 - motorSmoothingFactor) + motor1Val * motorSmoothingFactor;
+  motor2Smoothed = motor2Smoothed * (1.0 - motorSmoothingFactor) + motor2Val * motorSmoothingFactor;
+  
+  // Use smoothed values for motor control
+  int16_t motor1Output = (int16_t)motor1Smoothed;
+  int16_t motor2Output = (int16_t)motor2Smoothed;
+  
   // MOTOR 1
-  if (abs(motor1Val) < SBUS_VAL_DEADBAND)
+  if (abs(motor1Output) < SBUS_VAL_DEADBAND)
   {
     motor1.motorStop(); // Soft Stop    -no argument
   }
-  if (motor1Val < -SBUS_VAL_DEADBAND)
+  if (motor1Output < -SBUS_VAL_DEADBAND)
   {
-    motor1.motorRev(-motor1Val); // Pass the speed to the motor: 0-255 for 8 bit resolution
+    motor1.motorRev(-motor1Output); // Pass the speed to the motor: 0-255 for 8 bit resolution
   }
-  if (motor1Val > SBUS_VAL_DEADBAND)
+  if (motor1Output > SBUS_VAL_DEADBAND)
   {
-    motor1.motorGo(motor1Val); // Pass the speed to the motor: 0-255 for 8 bit resolution
+    motor1.motorGo(motor1Output); // Pass the speed to the motor: 0-255 for 8 bit resolution
   }
 
   // MOTOR 2
-  if (abs(motor2Val) < SBUS_VAL_DEADBAND)
+  if (abs(motor2Output) < SBUS_VAL_DEADBAND)
   {
     motor2.motorStop(); // Soft Stop    -no argument
   }
-  if (motor2Val < -SBUS_VAL_DEADBAND)
+  if (motor2Output < -SBUS_VAL_DEADBAND)
   {
-    motor2.motorRev(-motor2Val); // Pass the speed to the motor: 0-255 for 8 bit resolution
+    motor2.motorRev(-motor2Output); // Pass the speed to the motor: 0-255 for 8 bit resolution
   }
-  if (motor2Val > SBUS_VAL_DEADBAND)
+  if (motor2Output > SBUS_VAL_DEADBAND)
   {
-    motor2.motorGo(motor2Val); // Pass the speed to the motor: 0-255 for 8 bit resolution
+    motor2.motorGo(motor2Output); // Pass the speed to the motor: 0-255 for 8 bit resolution
   }
 }

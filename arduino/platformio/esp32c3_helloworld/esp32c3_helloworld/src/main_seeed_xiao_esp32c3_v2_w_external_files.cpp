@@ -4,7 +4,7 @@
 
 // ========== CONTROL MODE SELECTION ==========
 // Set to 1 for WiFi webserver control, 0 for remote control
-#define USE_WIFI_CONTROL false
+#define USE_WIFI_CONTROL true
 // ============================================
 
 #if USE_WIFI_CONTROL
