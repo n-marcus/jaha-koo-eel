@@ -51,6 +51,9 @@ struct
   uint8_t mouthB = 0; // 0 to 255 (blue)
 } wifiControl;
 
+// Serial control buffer
+String serialInputBuffer = "";
+
 // Web server handlers
 void handleRoot()
 {
@@ -425,6 +428,121 @@ void handleStatus()
   server.send(200, "application/json", json);
 }
 
+void printSerialHelp()
+{
+  Serial.println("\n=== Serial Control Commands ===");
+  Serial.println("M1:<val>   Motor 1      (-255 to 255)");
+  Serial.println("M2:<val>   Motor 2      (-255 to 255)");
+  Serial.println("N1A:<val>  Nood 1a      (0 to 255)");
+  Serial.println("N1B:<val>  Nood 1b      (0 to 255)");
+  Serial.println("N2A:<val>  Nood 2a      (0 to 255)");
+  Serial.println("N2B:<val>  Nood 2b      (0 to 255)");
+  Serial.println("ER:<val>   Eye Red      (0 to 255)");
+  Serial.println("EG:<val>   Eye Green    (0 to 255)");
+  Serial.println("EB:<val>   Eye Blue     (0 to 255)");
+  Serial.println("MR:<val>   Mouth Red    (0 to 255)");
+  Serial.println("MG:<val>   Mouth Green  (0 to 255)");
+  Serial.println("MB:<val>   Mouth Blue   (0 to 255)");
+  Serial.println("STOP       Stop motors");
+  Serial.println("STATUS     Print current values");
+  Serial.println("?          Show this help");
+  Serial.println("================================\n");
+}
+
+void checkSerialControl()
+{
+  while (Serial.available() > 0)
+  {
+    char c = Serial.read();
+    if (c == '\n' || c == '\r')
+    {
+      serialInputBuffer.trim();
+      if (serialInputBuffer.length() == 0)
+      {
+        serialInputBuffer = "";
+        return;
+      }
+
+      String cmd = serialInputBuffer;
+      serialInputBuffer = "";
+
+      // Commands without a value
+      if (cmd.equalsIgnoreCase("STOP"))
+      {
+        wifiControl.motor1 = 0;
+        wifiControl.motor2 = 0;
+        Serial.println("Motors stopped");
+        return;
+      }
+      if (cmd.equalsIgnoreCase("STATUS"))
+      {
+        Serial.println("M1=" + String(wifiControl.motor1) +
+                       " M2=" + String(wifiControl.motor2) +
+                       " N1A=" + String(wifiControl.nood1a) +
+                       " N1B=" + String(wifiControl.nood1b) +
+                       " N2A=" + String(wifiControl.nood2a) +
+                       " N2B=" + String(wifiControl.nood2b) +
+                       " ER=" + String(wifiControl.eyeR) +
+                       " EG=" + String(wifiControl.eyeG) +
+                       " EB=" + String(wifiControl.eyeB) +
+                       " MR=" + String(wifiControl.mouthR) +
+                       " MG=" + String(wifiControl.mouthG) +
+                       " MB=" + String(wifiControl.mouthB));
+        return;
+      }
+      if (cmd == "?" || cmd.equalsIgnoreCase("HELP"))
+      {
+        printSerialHelp();
+        return;
+      }
+
+      // Commands in KEY:VALUE format
+      int colonIdx = cmd.indexOf(':');
+      if (colonIdx < 0)
+      {
+        Serial.println("Unknown command: " + cmd + " (send ? for help)");
+        return;
+      }
+      String key = cmd.substring(0, colonIdx);
+      key.toUpperCase();
+      int value = cmd.substring(colonIdx + 1).toInt();
+
+      if      (key == "M1")  { wifiControl.motor1 = constrain(value, -255, 255); Serial.println("Motor1: "  + String(wifiControl.motor1)); }
+      else if (key == "M2")  { wifiControl.motor2 = constrain(value, -255, 255); Serial.println("Motor2: "  + String(wifiControl.motor2)); }
+      else if (key == "N1A") { wifiControl.nood1a = constrain(value, 0, 255);    Serial.println("Nood1a: "  + String(wifiControl.nood1a)); }
+      else if (key == "N1B") { wifiControl.nood1b = constrain(value, 0, 255);    Serial.println("Nood1b: "  + String(wifiControl.nood1b)); }
+      else if (key == "N2A") { wifiControl.nood2a = constrain(value, 0, 255);    Serial.println("Nood2a: "  + String(wifiControl.nood2a)); }
+      else if (key == "N2B") { wifiControl.nood2b = constrain(value, 0, 255);    Serial.println("Nood2b: "  + String(wifiControl.nood2b)); }
+      else if (key == "ER")  { wifiControl.eyeR   = constrain(value, 0, 255);    Serial.println("EyeR: "    + String(wifiControl.eyeR)); }
+      else if (key == "EG")  { wifiControl.eyeG   = constrain(value, 0, 255);    Serial.println("EyeG: "    + String(wifiControl.eyeG)); }
+      else if (key == "EB")  { wifiControl.eyeB   = constrain(value, 0, 255);    Serial.println("EyeB: "    + String(wifiControl.eyeB)); }
+      else if (key == "MR")  { wifiControl.mouthR = constrain(value, 0, 255);    Serial.println("MouthR: "  + String(wifiControl.mouthR)); }
+      else if (key == "MG")  { wifiControl.mouthG = constrain(value, 0, 255);    Serial.println("MouthG: "  + String(wifiControl.mouthG)); }
+      else if (key == "MB")  { wifiControl.mouthB = constrain(value, 0, 255);    Serial.println("MouthB: "  + String(wifiControl.mouthB)); }
+      else                   { Serial.println("Unknown key: " + key + " (send ? for help)"); }
+    }
+    else
+    {
+      serialInputBuffer += c;
+    }
+  }
+}
+
+void blinkWiFiStatus(bool connected)
+{
+  pixels.begin();
+  uint32_t color = connected ? pixels.Color(0, 180, 0) : pixels.Color(180, 0, 0);
+  for (int i = 0; i < 10; i++)
+  {
+    pixels.fill(color);
+    pixels.show();
+    delay(80);
+    pixels.clear();
+    pixels.show();
+    delay(80);
+  }
+}
+
 void initWiFi()
 {
   Serial.println("\n=== WiFi Control Mode Enabled ===");
@@ -449,10 +567,12 @@ void initWiFi()
     Serial.println("\nAccess the control panel at:");
     Serial.print("http://");
     Serial.println(WiFi.localIP());
+    blinkWiFiStatus(true);
   }
   else
   {
     Serial.println("\nWiFi connection failed! Check credentials.");
+    blinkWiFiStatus(false);
   }
 
   // Setup web server routes
@@ -465,6 +585,7 @@ void initWiFi()
 
   server.begin();
   Serial.println("Web server started");
+  printSerialHelp();
   Serial.println("================================\n");
 }
 #endif
@@ -501,6 +622,7 @@ void loop()
 #if USE_WIFI_CONTROL
   // WiFi mode: handle web server and apply WiFi control values directly
   server.handleClient();
+  checkSerialControl();
 
   // Apply WiFi control values directly to outputs
   motor1Val = wifiControl.motor1;
