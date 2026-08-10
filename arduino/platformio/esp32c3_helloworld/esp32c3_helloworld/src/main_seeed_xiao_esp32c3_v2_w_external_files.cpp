@@ -29,8 +29,8 @@ byte vVal = 0;
 
 #if USE_WIFI_CONTROL
 // WiFi credentials
-const char *ssid = "Pablos Paleis MainFrame"; // Change this to your WiFi SSID
-const char *password = "VraagPablo33";        // Change this to your WiFi password
+const char *ssid = "Theater Utrecht Productie"; // Change this to your WiFi SSID
+const char *password = "Productie25!";        // Change this to your WiFi password
 
 WebServer server(80);
 
