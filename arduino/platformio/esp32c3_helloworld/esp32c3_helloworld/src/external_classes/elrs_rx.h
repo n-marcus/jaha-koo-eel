@@ -27,11 +27,11 @@ int16_t channelMin[16];
 int16_t channelMax[16];
 bool calibrationInitialized = false;
 
-#define SBUS_VAL_MIN 360  // 191
+#define SBUS_VAL_MIN 191  // 191
 #define SBUS_VAL_MAX 1793 // 1793
-#define SBUS_VAL_CENTER 1146
+#define SBUS_VAL_CENTER 993
 
-#define SBUS_VAL_CENTER_ROLL 819
+#define SBUS_VAL_CENTER_ROLL 992
 #define SBUS_VAL_MIN_ROLL 190
 #define SBUS_VAL_MAX_ROLL 1628
 
